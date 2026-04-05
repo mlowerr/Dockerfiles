@@ -1,0 +1,12 @@
+services:
+  ai-agents:
+    image: ai-coding-agents:latest
+    stdin_open: true
+    tty: true
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - ${HOME}/.codex:/home/dev/.codex
+      - ${HOME}/.claude:/home/dev/.claude
+      - ${HOME}/.config/gemini:/home/dev/.config/gemini
+      - ${HOME}/.kimi:/home/dev/.kimi
