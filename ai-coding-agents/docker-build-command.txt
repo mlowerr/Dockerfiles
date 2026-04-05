@@ -1,0 +1,5 @@
+docker build --no-cache \
+  --build-arg USERNAME=matt \
+  --build-arg UID=$(id -u) \
+  --build-arg GID=$(id -g) \
+  -t ai-coding-agents:latest .

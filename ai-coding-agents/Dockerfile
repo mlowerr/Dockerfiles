@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
 
-# Base tooling
+# ---- base packages ----
 RUN apt-get update && apt-get install -y \
     bash \
     ca-certificates \
@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
     less \
     openssh-client \
     python3 \
-    python3-venv \
     python3-pip \
+    python3-venv \
     ripgrep \
     sudo \
     unzip \
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
     xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 22.x
+# ---- Node.js 22 ----
 RUN mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
       | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
@@ -33,8 +33,19 @@ RUN mkdir -p /etc/apt/keyrings \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user
-ARG USERNAME=dev
+# ---- GitHub CLI ----
+RUN mkdir -p /etc/apt/keyrings \
+    && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+      | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null \
+    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+      > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update \
+    && apt-get install -y gh \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---- container user matching WSL user ----
+ARG USERNAME=matt
 ARG UID=1000
 ARG GID=1000
 
@@ -43,50 +54,56 @@ RUN set -eux; \
     if [ -z "${EXISTING_GROUP}" ]; then \
         groupadd --gid "${GID}" "${USERNAME}"; \
         EXISTING_GROUP="${USERNAME}"; \
+    elif [ "${EXISTING_GROUP}" != "${USERNAME}" ]; then \
+        groupmod -n "${USERNAME}" "${EXISTING_GROUP}"; \
     fi; \
     EXISTING_USER="$(getent passwd "${UID}" | cut -d: -f1 || true)"; \
-    if [ -n "${EXISTING_USER}" ]; then \
-        HOME_DIR="$(getent passwd "${EXISTING_USER}" | cut -d: -f6)"; \
+    if [ -n "${EXISTING_USER}" ] && [ "${EXISTING_USER}" != "${USERNAME}" ]; then \
         usermod -l "${USERNAME}" "${EXISTING_USER}"; \
-        usermod -d "/home/${USERNAME}" -m "${USERNAME}" || true; \
-        usermod -g "${GID}" "${USERNAME}"; \
-        if [ "${HOME_DIR}" != "/home/${USERNAME}" ] && [ ! -d "/home/${USERNAME}" ]; then \
-            mkdir -p "/home/${USERNAME}"; \
-            chown "${UID}:${GID}" "/home/${USERNAME}"; \
-        fi; \
-    elif id -u "${USERNAME}" >/dev/null 2>&1; then \
-        usermod -u "${UID}" -g "${GID}" "${USERNAME}"; \
-    else \
+    elif [ -z "${EXISTING_USER}" ] && ! id -u "${USERNAME}" >/dev/null 2>&1; then \
         useradd --uid "${UID}" --gid "${GID}" -m -s /bin/bash "${USERNAME}"; \
     fi; \
-    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    usermod -d "/home/${USERNAME}" -m "${USERNAME}"; \
+    usermod -g "${GID}" "${USERNAME}"; \
+    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}; \
+    chmod 0440 /etc/sudoers.d/${USERNAME}
 
 USER ${USERNAME}
 WORKDIR /workspace
 ENV HOME=/home/${USERNAME}
-
-# Make local bin paths visible
 ENV PATH="${HOME}/.local/bin:${HOME}/.npm-global/bin:${PATH}"
-RUN mkdir -p "${HOME}/.npm-global" \
+
+RUN mkdir -p \
+    "${HOME}/.npm-global" \
+    "${HOME}/.codex" \
+    "${HOME}/.claude" \
+    "${HOME}/.config/gemini" \
+    "${HOME}/.kimi" \
     && npm config set prefix "${HOME}/.npm-global"
 
-# Install Codex CLI
+# ---- install coding CLIs ----
+
+# Codex CLI
 RUN npm install -g @openai/codex
 
-# Install Gemini CLI
+# Gemini CLI
 RUN npm install -g @google/gemini-cli
 
-# Install Claude Code
+# Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Install Kimi Code CLI
+# Kimi Code CLI
 RUN curl -LsSf https://code.kimi.com/install.sh | bash
 
-# Optional: sanity check versions during build
-RUN bash -lc 'set -e; \
-    codex --version || true; \
-    gemini --version || true; \
-    claude --version || true; \
-    kimi --version || true'
+RUN bash -lc '\
+    echo "node: $(node --version)" && \
+    echo "npm:  $(npm --version)" && \
+    echo "git:  $(git --version)" && \
+    echo "gh:   $(gh --version | head -n 1)" && \
+    codex --version || true && \
+    gemini --version || true && \
+    claude --version || true && \
+    kimi --version || true \
+'
 
 CMD ["/bin/bash"]

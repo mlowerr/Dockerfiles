@@ -6,7 +6,3 @@ services:
     working_dir: /workspace
     volumes:
       - .:/workspace
-      - ${HOME}/.codex:/home/dev/.codex
-      - ${HOME}/.claude:/home/dev/.claude
-      - ${HOME}/.config/gemini:/home/dev/.config/gemini
-      - ${HOME}/.kimi:/home/dev/.kimi

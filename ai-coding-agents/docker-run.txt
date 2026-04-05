@@ -1,1 +1,4 @@
-docker run --rm -it \ -v "$PWD":/workspace \ -v "$HOME/.codex":/home/dev/.codex \ -v "$HOME/.claude":/home/dev/.claude \ -v "$HOME/.config/gemini":/home/dev/.config/gemini \ -v "$HOME/.kimi":/home/dev/.kimi \ -w /workspace \ ai-coding-agents:latest
+docker run --rm -it \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  ai-coding-agents:latest
