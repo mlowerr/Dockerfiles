@@ -72,38 +72,51 @@ USER ${USERNAME}
 WORKDIR /workspace
 ENV HOME=/home/${USERNAME}
 ENV PATH="${HOME}/.local/bin:${HOME}/.npm-global/bin:${PATH}"
+ENV UV_UNMANAGED_INSTALL="${HOME}/.local/bin"
 
 RUN mkdir -p \
+    "${HOME}/.local/bin" \
     "${HOME}/.npm-global" \
     "${HOME}/.codex" \
     "${HOME}/.claude" \
     "${HOME}/.config/gemini" \
     "${HOME}/.kimi" \
+    "${HOME}/.config" \
     && npm config set prefix "${HOME}/.npm-global"
 
 # ---- install coding CLIs ----
 
-# Codex CLI
-RUN npm install -g @openai/codex
+# npm-based CLIs
+RUN npm install -g \
+    @openai/codex \
+    @google/gemini-cli \
+    opencode-ai@latest \
+    @qwen-code/qwen-code@latest \
+    @charmland/crush@latest
 
-# Gemini CLI
-RUN npm install -g @google/gemini-cli
+# Python-based CLIs
+RUN pip3 install --break-system-packages aider-chat
 
-# Claude Code
-RUN curl -fsSL https://claude.ai/install.sh | bash
+# Script-installed CLIs
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && curl -LsSf https://code.kimi.com/install.sh | bash \
+    && ln -sf "${HOME}/.local/bin/kimi" "${HOME}/.kimi/kimi" \
+    && curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash
 
-# Kimi Code CLI
-RUN curl -LsSf https://code.kimi.com/install.sh | bash
-
-RUN bash -lc '\
+RUN bash -c '\
     echo "node: $(node --version)" && \
     echo "npm:  $(npm --version)" && \
     echo "git:  $(git --version)" && \
     echo "gh:   $(gh --version | head -n 1)" && \
     codex --version || true && \
     gemini --version || true && \
+    opencode --version || true && \
+    qwen --version || true && \
+    crush --version || true && \
+    aider --version || true && \
     claude --version || true && \
-    kimi --version || true \
+    kimi --version || true && \
+    goose --version || true \
 '
 
 CMD ["/bin/bash"]

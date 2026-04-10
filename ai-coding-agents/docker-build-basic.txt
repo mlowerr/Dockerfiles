@@ -1,0 +1,3 @@
+Use this when you want the simplest possible image build with the default container user settings.
+
+docker build -t ai-coding-agents:latest -f ai-coding-agents/Dockerfile ai-coding-agents

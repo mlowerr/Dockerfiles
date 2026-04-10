@@ -1,0 +1,9 @@
+Use this when you want files created from inside the container to better match your host username, UID, and GID.
+
+docker build --no-cache \
+  --build-arg USERNAME=${AI_AGENTS_USERNAME:-matt} \
+  --build-arg UID=${AI_AGENTS_UID:-$(id -u)} \
+  --build-arg GID=${AI_AGENTS_GID:-$(id -g)} \
+  -t ai-coding-agents:latest \
+  -f ai-coding-agents/Dockerfile \
+  ai-coding-agents

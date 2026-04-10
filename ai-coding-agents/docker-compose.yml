@@ -1,6 +1,13 @@
 services:
   ai-agents:
     image: ai-coding-agents:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${AI_AGENTS_USERNAME:-matt}
+        UID: ${AI_AGENTS_UID:-1000}
+        GID: ${AI_AGENTS_GID:-1000}
     stdin_open: true
     tty: true
     working_dir: /workspace
