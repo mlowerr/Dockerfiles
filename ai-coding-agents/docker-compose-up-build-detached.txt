@@ -1,0 +1,3 @@
+Use this when you want a long-running Compose-managed container and also want Compose to rebuild the image first.
+
+AI_AGENTS_UID=$(id -u) AI_AGENTS_GID=$(id -g) docker compose -f ai-coding-agents/docker-compose.yml up --build -d ai-agents

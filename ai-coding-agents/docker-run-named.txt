@@ -1,0 +1,7 @@
+Use this when you want a reusable named container that you can stop, start, and re-enter later.
+
+docker run -dit \
+  --name ai-agents-dev \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  ai-coding-agents:latest

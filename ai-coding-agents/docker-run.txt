@@ -1,3 +1,5 @@
+Use this when you want a disposable interactive container for a quick session in the current project directory.
+
 docker run --rm -it \
   -v "$PWD":/workspace \
   -w /workspace \

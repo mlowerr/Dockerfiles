@@ -1,0 +1,3 @@
+Use this when you want a one-off interactive session launched through Docker Compose with host UID/GID passed into the build.
+
+AI_AGENTS_UID=$(id -u) AI_AGENTS_GID=$(id -g) docker compose -f ai-coding-agents/docker-compose.yml run --rm ai-agents
