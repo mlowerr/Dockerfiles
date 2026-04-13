@@ -21,6 +21,10 @@ RUN apt-get update && apt-get install -y \
     unzip \
     wget \
     xz-utils \
+    screen \
+    tmux \
+    vim \
+    && sudo apt full-upgrade \
     && rm -rf /var/lib/apt/lists/*
 
 # ---- Node.js 22 ----
