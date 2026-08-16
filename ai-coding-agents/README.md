@@ -1,67 +1,86 @@
 # AI Coding Agents Docker Image
 
-This repository builds a Docker image for running several AI coding CLIs in a single Ubuntu-based development container.
+An Ubuntu 24.04 development image containing a broad set of terminal coding agents, their shared toolchains, and common repository-inspection utilities. The image runs as a configurable non-root user and does not contain credentials or mount the host Docker socket by default.
 
-Included tools:
+## Included coding harnesses
 
-- OpenAI Codex CLI
-- Google Gemini CLI
-- OpenCode
-- Qwen Code
-- Crush
-- Aider
-- Claude Code
-- Kimi Code CLI
-- Goose CLI
-- GitHub CLI
-- Node.js 22
-- Python 3
-- Common shell utilities such as `git`, `curl`, `ripgrep`, `jq`, and `sudo`
+| Harness | Command | Install channel | State/config path |
+|---|---|---|---|
+| OpenAI Codex CLI | `codex` | npm | `~/.codex` |
+| Claude Code | `claude` | official installer | `~/.claude` |
+| Google Gemini CLI | `gemini` | npm | `~/.config/gemini` |
+| OpenCode | `opencode` | npm | `~/.config/opencode` |
+| Qwen Code | `qwen` | npm | tool-managed |
+| Crush | `crush` | npm | tool-managed |
+| Aider | `aider` | isolated uv tool | tool-managed |
+| Kimi Code CLI | `kimi` | official installer | `~/.kimi` |
+| Goose | `goose` | official release installer | tool-managed |
+| Pi | `pi` | npm | `~/.pi` |
+| Hermes Agent | `hermes` | official installer | `~/.hermes` |
+| OpenClaw | `openclaw` | npm | `~/.openclaw` |
+| GitHub Copilot CLI | `copilot` | npm | `~/.copilot` |
+| OpenHands CLI | `openhands` | isolated uv tool | `~/.openhands` |
+| Amp | `amp` | official installer | tool-managed |
+| Cursor Agent | `agent` | official installer | `~/.cursor` |
+| Factory Droid | `droid` | official installer | `~/.factory` |
 
-## Repository Contents
+This set keeps every harness previously in the image and adds actively maintained, standalone terminal agents. Kiro, Continue, Cline, Roo Code, and SWE-agent were not put in the default image: their primary distribution is editor-specific, benchmark-oriented, in transition, or not a generally available standalone Linux harness. They can be reconsidered when an official non-interactive Linux installer and stable CLI contract are available.
 
-- `Dockerfile`: image definition
-- `docker-compose.yml`: compose service for launching the container
-- `.env.example`: example compose/build environment variables for username and UID/GID mapping
-- `docker-build-basic.txt`: simple build command using default container user settings
-- `docker-build-host-user.txt`: build command that maps the container user to your host username/UID/GID
-- `docker-run.txt`: example disposable `docker run` command
-- `docker-run-named.txt`: example named-container `docker run` command
-- `docker-compose-run.txt`: example compose run command
-- `docker-compose-up-build-detached.txt`: example compose `up --build -d` command
+Every promised command must pass `scripts/verify-agents.sh` during the build; a missing or broken agent fails the image rather than being hidden by `|| true`. Resolved versions are stored at `~/.local/share/ai-agents/versions.txt`.
+
+## Shared development tools
+
+The image includes:
+
+- Node.js 22, npm, Corepack, Python 3, `uv`, `uvx`, pipx, Git, Git LFS, and GitHub CLI.
+- Docker CLI and the Compose plugin. There is no Docker daemon in the image.
+- Compilers and native-extension prerequisites: `build-essential`, `make`, `pkg-config`, Python headers, and OpenSSL headers.
+- Search and navigation tools: ripgrep, fd, fzf, bat, tree, jq, and sqlite3.
+- Diagnostics and shell tools: ShellCheck, procps, lsof, netcat, DNS utilities, rsync, patch, tmux, screen, and Vim.
+
+Python applications are installed into isolated `uv` environments instead of modifying Ubuntu's distribution-managed Python installation.
 
 ## Build
 
-Use this when you want the simplest possible image build with the default container user settings:
+From the repository root:
 
 ```bash
-docker build -t ai-coding-agents:latest -f ai-coding-agents/Dockerfile ai-coding-agents
-```
-
-See also: `ai-coding-agents/docker-build-basic.txt`
-
-Use this when you want files created from inside the container to better match your host username, UID, and GID:
-
-```bash
-docker build --no-cache \
-  --build-arg USERNAME=${AI_AGENTS_USERNAME:-matt} \
-  --build-arg UID=${AI_AGENTS_UID:-$(id -u)} \
-  --build-arg GID=${AI_AGENTS_GID:-$(id -g)} \
+docker build \
+  --build-arg USERNAME="${AI_AGENTS_USERNAME:-matt}" \
+  --build-arg UID="${AI_AGENTS_UID:-$(id -u)}" \
+  --build-arg GID="${AI_AGENTS_GID:-$(id -g)}" \
   -t ai-coding-agents:latest \
   -f ai-coding-agents/Dockerfile \
   ai-coding-agents
 ```
 
-See also: `ai-coding-agents/docker-build-host-user.txt`
+The simple form uses the default `matt:1000:1000` image user:
 
-If you prefer, copy `ai-coding-agents/.env.example` to `ai-coding-agents/.env` and adjust the values before using the compose examples.
+```bash
+docker build -t ai-coding-agents:latest ai-coding-agents
+```
 
-The image is based on `ubuntu:24.04` and sets up a non-root user, a writable npm global directory, and the installed CLIs during build time.
-It also creates empty per-tool config directories in the container home directory so the CLIs can start without any host-mounted config.
+### Version policy and overrides
 
-## Run With Docker
+Fast-moving npm and Python agents default to the newest version available at build time. Each version is independently overridable, allowing CI or a release build to pin a tested set:
 
-Use this when you want a disposable interactive container for a quick session in the current project directory:
+```bash
+docker build \
+  --build-arg CODEX_VERSION=1.2.3 \
+  --build-arg PI_VERSION=1.2.3 \
+  --build-arg OPENCLAW_VERSION=1.2.3 \
+  --build-arg AIDER_VERSION=1.2.3 \
+  -t ai-coding-agents:tested \
+  ai-coding-agents
+```
+
+Available arguments are `CODEX_VERSION`, `GEMINI_VERSION`, `OPENCODE_VERSION`, `QWEN_VERSION`, `CRUSH_VERSION`, `PI_VERSION`, `OPENCLAW_VERSION`, `COPILOT_VERSION`, `AIDER_VERSION`, and `OPENHANDS_VERSION`. Hermes can be sourced from a tested upstream ref using `HERMES_REF`.
+
+Vendor-managed installers do not all publish version-addressable artifacts. The build uses their official TLS endpoints, immediately checks the resulting commands, and records the resolved versions. Scheduled CI rebuilds explicitly disable Docker's build cache on both architectures, ensuring that `latest` packages are resolved again and every live installer is exercised. Renovate groups dependency updates for review rather than silently changing a previously built image.
+
+## Run
+
+Mount a project into `/workspace` and start a shell:
 
 ```bash
 docker run --rm -it \
@@ -70,9 +89,7 @@ docker run --rm -it \
   ai-coding-agents:latest
 ```
 
-This starts an interactive shell in `/workspace` with your current directory mounted into the container.
-
-Use this when you want a reusable named container that you can stop, start, and re-enter later:
+For a reusable container:
 
 ```bash
 docker run -dit \
@@ -80,135 +97,71 @@ docker run -dit \
   -v "$PWD":/workspace \
   -w /workspace \
   ai-coding-agents:latest
-```
 
-See also: `ai-coding-agents/docker-run-named.txt`
-
-Attach a shell to the running container:
-
-```bash
 docker exec -it ai-agents-dev /bin/bash
 ```
 
-Stop the container without removing it:
+Compose passes the configurable username and IDs into the build:
 
 ```bash
-docker stop ai-agents-dev
+AI_AGENTS_UID=$(id -u) AI_AGENTS_GID=$(id -g) \
+  docker compose -f ai-coding-agents/docker-compose.yml run --rm ai-agents
 ```
 
-Start the existing container again:
+Copy `.env.example` to `.env` to persist those Compose settings locally.
+
+## Authentication and persistence
+
+No API keys, OAuth tokens, host configuration, or login caches are copied into the image. Authenticate from inside the container using each vendor's documented login command or pass its documented API-key environment variable at runtime:
 
 ```bash
-docker start ai-agents-dev
+docker run --rm -it \
+  --env-file /path/to/private-agent.env \
+  -v "$PWD":/workspace \
+  ai-coding-agents:latest
 ```
 
-Start it and attach immediately:
+Do not commit that environment file. Prefer short-lived credentials and pass only the variables required by the agent in use. Some OAuth flows print a device URL and code; open that URL on the host and finish the login there.
+
+The default Compose configuration deliberately has no credential volumes. To retain container-created login state in Docker-managed named volumes, add the opt-in overlay:
 
 ```bash
-docker start -ai ai-agents-dev
+AI_AGENTS_UID=$(id -u) AI_AGENTS_GID=$(id -g) \
+  docker compose \
+    -f ai-coding-agents/docker-compose.yml \
+    -f ai-coding-agents/docker-compose.persistence.yml \
+    run --rm ai-agents
 ```
 
-Remove the container when you no longer need it:
+The overlay persists the documented state directories without exposing existing host credentials. Vendor layouts can change; inspect a tool's current documentation before backing up or sharing its volume.
+
+## Docker access and security
+
+The included Docker CLI is inert unless connected to a daemon. Do **not** mount `/var/run/docker.sock` casually: control of the host daemon is effectively host-level access. The default Docker and Compose examples neither mount the socket nor run privileged.
+
+OpenHands and other sandbox-oriented agents may offer container runtimes. Enabling one is an explicit runtime decision; it is not required for the image to start and must not be implemented by making this container privileged.
+
+Agents can inspect files and execute commands in mounted repositories. Review their approval/sandbox settings, restrict mounted paths, and never bake secrets into an image layer.
+
+## Architecture and verification
+
+The Dockerfile uses packages and official installers expected to support `linux/amd64` and `linux/arm64`. The GitHub Actions workflow builds and runs the verifier natively on both architectures. If an upstream project stops publishing one architecture, that job fails visibly rather than installing a binary for the wrong CPU.
+
+Local checks:
 
 ```bash
-docker rm -f ai-agents-dev
+shellcheck ai-coding-agents/scripts/*.sh
+docker build --check -f ai-coding-agents/Dockerfile ai-coding-agents
+docker build -t ai-coding-agents:test ai-coding-agents
+docker run --rm ai-coding-agents:test verify-agents
 ```
 
-## Run With Docker Compose
+The build may need more time and disk than a language-specific development image because it intentionally combines many independent harnesses.
 
-Current compose behavior:
+## Troubleshooting
 
-- The service builds from `ai-coding-agents/Dockerfile`
-- It can pass through `AI_AGENTS_USERNAME`, `AI_AGENTS_UID`, and `AI_AGENTS_GID` as build args
-- It mounts the current repository directory into `/workspace`
-- It opens an interactive TTY session
-
-### Compose Run
-
-Use this when you want a one-off interactive session launched through Docker Compose with host UID/GID passed into the build:
-
-```bash
-AI_AGENTS_UID=$(id -u) AI_AGENTS_GID=$(id -g) docker compose -f ai-coding-agents/docker-compose.yml run --rm ai-agents
-```
-
-See also: `ai-coding-agents/docker-compose-run.txt`
-
-### Compose Up
-
-Start the compose service as a persistent background container:
-
-```bash
-AI_AGENTS_UID=$(id -u) AI_AGENTS_GID=$(id -g) docker compose -f ai-coding-agents/docker-compose.yml up -d ai-agents
-```
-
-Use this when you want a long-running Compose-managed container and also want Compose to rebuild the image first:
-
-```bash
-AI_AGENTS_UID=$(id -u) AI_AGENTS_GID=$(id -g) docker compose -f ai-coding-agents/docker-compose.yml up --build -d ai-agents
-```
-
-See also: `ai-coding-agents/docker-compose-up-build-detached.txt`
-
-Open a shell in the running compose container:
-
-```bash
-docker compose -f ai-coding-agents/docker-compose.yml exec ai-agents /bin/bash
-```
-
-Stop the compose service without deleting the container:
-
-```bash
-docker compose -f ai-coding-agents/docker-compose.yml stop ai-agents
-```
-
-Start the stopped compose service again:
-
-```bash
-docker compose -f ai-coding-agents/docker-compose.yml start ai-agents
-```
-
-Stop and remove the compose container:
-
-```bash
-docker compose -f ai-coding-agents/docker-compose.yml down
-```
-
-## Tool Configuration
-
-By default, the container does not mount host configuration directories for Codex, Claude, Gemini, or Kimi.
-The image creates these directories inside the container instead:
-
-- `~/.codex`
-- `~/.claude`
-- `~/.config/gemini`
-- `~/.kimi`
-
-If you want persistent sign-in state later, you can still mount specific config directories intentionally, but it is no longer part of the default runtime setup.
-
-## Default Container Behavior
-
-The container starts with:
-
-```bash
-/bin/bash
-```
-
-The working directory is:
-
-```bash
-/workspace
-```
-
-## Typical Workflow
-
-1. Build the image
-2. For throwaway sessions, use `docker run --rm -it` or `docker compose run --rm`
-3. For a reusable environment, create a named container with `docker run -dit --name ...` or `docker compose up -d`
-4. Re-enter a running container with `docker exec -it ... /bin/bash` or `docker compose exec`
-5. Sign in to any CLI you want to use from inside the container
-6. Work inside `/workspace`
-
-## Notes
-
-- `build.log` appears to be a captured Docker build log and is not required for normal usage
-- Matching the container user to the host UID/GID via build args is workable but more custom than a typical fixed-user Docker image
+- **A command is missing during build:** the upstream installer or package layout changed. Consult the failing verifier entry and the official project release notes; do not bypass it with `|| true`.
+- **OAuth callback cannot open a browser:** use the displayed device URL on the host. If the vendor only supports a localhost callback, publish only the required port for the login session.
+- **Files have the wrong ownership:** rebuild with host `UID` and `GID` arguments or populate `.env` for Compose.
+- **An agent needs Docker:** connect to a deliberately isolated remote daemon or an explicitly accepted host socket; do not start a privileged Docker daemon in this image.
+- **An ARM build fails:** verify that the named upstream agent publishes ARM64 artifacts. Keep it out of the ARM image rather than emulating or substituting an AMD64 binary silently.
