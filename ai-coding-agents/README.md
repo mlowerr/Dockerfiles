@@ -76,7 +76,7 @@ docker build \
 
 Available arguments are `CODEX_VERSION`, `GEMINI_VERSION`, `OPENCODE_VERSION`, `QWEN_VERSION`, `CRUSH_VERSION`, `PI_VERSION`, `OPENCLAW_VERSION`, `COPILOT_VERSION`, `AIDER_VERSION`, and `OPENHANDS_VERSION`. Hermes can be sourced from a tested upstream ref using `HERMES_REF`.
 
-Vendor-managed installers do not all publish version-addressable artifacts. The build uses their official TLS endpoints, immediately checks the resulting commands, and records the resolved versions. Scheduled CI rebuilds expose upstream installer or architecture breakage. Renovate groups dependency updates for review rather than silently changing a previously built image.
+Vendor-managed installers do not all publish version-addressable artifacts. The build uses their official TLS endpoints, immediately checks the resulting commands, and records the resolved versions. Scheduled CI rebuilds explicitly disable Docker's build cache on both architectures, ensuring that `latest` packages are resolved again and every live installer is exercised. Renovate groups dependency updates for review rather than silently changing a previously built image.
 
 ## Run
 

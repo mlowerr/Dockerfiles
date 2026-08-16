@@ -25,6 +25,9 @@ jobs:
       - uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ai-coding-agents/Dockerfile
+          # Ubuntu package versions intentionally follow the selected base image's
+          # repositories; treat Hadolint's pinning advice as a warning, not a failure.
+          failure-threshold: error
       - name: ShellCheck
         run: shellcheck ai-coding-agents/scripts/*.sh
       - name: Validate Compose configuration
@@ -51,6 +54,9 @@ jobs:
           platforms: linux/amd64
           load: true
           tags: ai-coding-agents:test
+          # Scheduled runs exist to resolve current `latest` packages and exercise
+          # live vendor installers, so reusing their RUN layers would defeat the job.
+          no-cache: ${{ github.event_name == 'schedule' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Verify installed harnesses as the image user
@@ -71,6 +77,7 @@ jobs:
           platforms: linux/arm64
           load: true
           tags: ai-coding-agents:test-arm64
+          no-cache: ${{ github.event_name == 'schedule' }}
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=max,scope=arm64
       - name: Verify installed harnesses as the image user
