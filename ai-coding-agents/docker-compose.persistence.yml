@@ -1,0 +1,27 @@
+# Optional persistence overlay. Use together with docker-compose.yml only when
+# retaining login state is desired; no host credential directories are mounted.
+services:
+  ai-agents:
+    volumes:
+      - codex-state:/home/${AI_AGENTS_USERNAME:-matt}/.codex
+      - claude-state:/home/${AI_AGENTS_USERNAME:-matt}/.claude
+      - gemini-state:/home/${AI_AGENTS_USERNAME:-matt}/.config/gemini
+      - kimi-state:/home/${AI_AGENTS_USERNAME:-matt}/.kimi
+      - opencode-state:/home/${AI_AGENTS_USERNAME:-matt}/.config/opencode
+      - pi-state:/home/${AI_AGENTS_USERNAME:-matt}/.pi
+      - hermes-state:/home/${AI_AGENTS_USERNAME:-matt}/.hermes
+      - openclaw-state:/home/${AI_AGENTS_USERNAME:-matt}/.openclaw
+      - copilot-state:/home/${AI_AGENTS_USERNAME:-matt}/.copilot
+      - openhands-state:/home/${AI_AGENTS_USERNAME:-matt}/.openhands
+
+volumes:
+  codex-state:
+  claude-state:
+  gemini-state:
+  kimi-state:
+  opencode-state:
+  pi-state:
+  hermes-state:
+  openclaw-state:
+  copilot-state:
+  openhands-state:

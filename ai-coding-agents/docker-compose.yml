@@ -11,5 +11,6 @@ services:
     stdin_open: true
     tty: true
     working_dir: /workspace
+    init: true
     volumes:
       - .:/workspace

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies", "ai-agents"],
+  "schedule": ["before 5am on Monday"],
+  "packageRules": [
+    {
+      "description": "Group coding-harness updates for one tested image rebuild",
+      "matchFileNames": ["ai-coding-agents/Dockerfile"],
+      "groupName": "AI coding harnesses"
+    }
+  ]
+}
