@@ -6,6 +6,7 @@ services:
       - codex-state:/home/${AI_AGENTS_USERNAME:-matt}/.codex
       - claude-state:/home/${AI_AGENTS_USERNAME:-matt}/.claude
       - gemini-state:/home/${AI_AGENTS_USERNAME:-matt}/.config/gemini
+      - grok-state:/home/${AI_AGENTS_USERNAME:-matt}/.grok
       - kimi-state:/home/${AI_AGENTS_USERNAME:-matt}/.kimi
       - opencode-state:/home/${AI_AGENTS_USERNAME:-matt}/.config/opencode
       - pi-state:/home/${AI_AGENTS_USERNAME:-matt}/.pi
@@ -18,6 +19,7 @@ volumes:
   codex-state:
   claude-state:
   gemini-state:
+  grok-state:
   kimi-state:
   opencode-state:
   pi-state:
