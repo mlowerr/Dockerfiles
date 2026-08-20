@@ -87,7 +87,7 @@ ENV HOME=/home/${USERNAME} \
 
 RUN mkdir -p \
       "${HOME}/.local/bin" "${HOME}/.npm-global" \
-      "${HOME}/.codex" "${HOME}/.claude" "${HOME}/.config/gemini" \
+      "${HOME}/.codex" "${HOME}/.claude" "${HOME}/.config/gemini" "${HOME}/.grok" \
       "${HOME}/.kimi" "${HOME}/.config/opencode" "${HOME}/.pi/agent" \
       "${HOME}/.hermes" "${HOME}/.openclaw" "${HOME}/.copilot" \
       "${HOME}/.openhands" "${HOME}/.amp" "${HOME}/.cursor" "${HOME}/.factory" \
@@ -96,6 +96,7 @@ RUN mkdir -p \
 # Versions are build arguments so automation can test and advance them independently.
 ARG CODEX_VERSION=latest
 ARG GEMINI_VERSION=latest
+ARG GROK_VERSION=latest
 ARG OPENCODE_VERSION=latest
 ARG QWEN_VERSION=latest
 ARG CRUSH_VERSION=latest
@@ -109,6 +110,7 @@ ARG OPENHANDS_VERSION=latest
 RUN npm install -g \
       "@openai/codex@${CODEX_VERSION}" \
       "@google/gemini-cli@${GEMINI_VERSION}" \
+      "@vibe-kit/grok-cli@${GROK_VERSION}" \
       "opencode-ai@${OPENCODE_VERSION}" \
       "@qwen-code/qwen-code@${QWEN_VERSION}" \
       "@charmland/crush@${CRUSH_VERSION}" \

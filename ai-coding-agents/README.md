@@ -9,6 +9,7 @@ An Ubuntu 24.04 development image containing a broad set of terminal coding agen
 | OpenAI Codex CLI | `codex` | npm | `~/.codex` |
 | Claude Code | `claude` | official installer | `~/.claude` |
 | Google Gemini CLI | `gemini` | npm | `~/.config/gemini` |
+| xAI Grok CLI | `grok` | npm | `~/.grok` |
 | OpenCode | `opencode` | npm | `~/.config/opencode` |
 | Qwen Code | `qwen` | npm | tool-managed |
 | Crush | `crush` | npm | tool-managed |
@@ -74,9 +75,9 @@ docker build \
   ai-coding-agents
 ```
 
-Available arguments are `CODEX_VERSION`, `GEMINI_VERSION`, `OPENCODE_VERSION`, `QWEN_VERSION`, `CRUSH_VERSION`, `PI_VERSION`, `OPENCLAW_VERSION`, `COPILOT_VERSION`, `AIDER_VERSION`, and `OPENHANDS_VERSION`. Hermes can be sourced from a tested upstream ref using `HERMES_REF`.
+Available arguments are `CODEX_VERSION`, `GEMINI_VERSION`, `GROK_VERSION`, `OPENCODE_VERSION`, `QWEN_VERSION`, `CRUSH_VERSION`, `PI_VERSION`, `OPENCLAW_VERSION`, `COPILOT_VERSION`, `AIDER_VERSION`, and `OPENHANDS_VERSION`. Hermes can be sourced from a tested upstream ref using `HERMES_REF`.
 
-Vendor-managed installers do not all publish version-addressable artifacts. The build uses their official TLS endpoints, immediately checks the resulting commands, and records the resolved versions. Scheduled CI rebuilds explicitly disable Docker's build cache on both architectures, ensuring that `latest` packages are resolved again and every live installer is exercised. Renovate groups dependency updates for review rather than silently changing a previously built image.
+Vendor-managed installers do not all publish version-addressable artifacts. The build uses their official TLS endpoints, immediately checks the resulting commands, and records the resolved versions. Use a no-cache build when you need to resolve every `latest` package again and exercise every live installer. Renovate groups dependency updates for review rather than silently changing a previously built image.
 
 ## Run
 
@@ -145,7 +146,7 @@ Agents can inspect files and execute commands in mounted repositories. Review th
 
 ## Architecture and verification
 
-The Dockerfile uses packages and official installers expected to support `linux/amd64` and `linux/arm64`. The GitHub Actions workflow builds and runs the verifier natively on both architectures. If an upstream project stops publishing one architecture, that job fails visibly rather than installing a binary for the wrong CPU.
+The Dockerfile uses packages and official installers expected to support `linux/amd64` and `linux/arm64`. Build and run the verifier on each architecture you plan to deploy; if an upstream project stops publishing one architecture, the verifier will fail rather than silently accepting a missing harness.
 
 Local checks:
 

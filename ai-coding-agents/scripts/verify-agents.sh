@@ -25,6 +25,7 @@ record() {
 
 record codex --version
 record gemini --version
+record grok --version
 record opencode --version
 record qwen --version
 record crush --version
